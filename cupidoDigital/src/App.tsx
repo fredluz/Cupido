@@ -83,6 +83,12 @@ function App() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const userId = localStorage.getItem('user_id') || ''
+    if (!userId) {
+      alert('Error: No user ID found')
+      return
+    }
+
     const scores: Record<Category, number> = {
       Romantic: 0,
       Adventurous: 0,
@@ -96,33 +102,41 @@ function App() {
       if (ans) scores[ans] += 2
     })
 
-    const userId = localStorage.getItem('user_id') || ''
-    const { data: upsertData, error } = await supabase
-      .from('quiz_responses')
-      .upsert({
-        user_id: userId,
-        user_name: userName,
-        phone,
-        romantic: scores.Romantic,
-        adventurous: scores.Adventurous,
-        intellectual: scores.Intellectual,
-        creative: scores.Creative,
-        chill: scores.Chill,
-        social: scores.Social,
-        ambitious: scores.Ambitious
-      } as QuizResponse, { onConflict: 'user_id' })
-      .select()
+    try {
+      const { data: upsertData, error } = await supabase
+        .from('quiz_responses')
+        .upsert({
+          user_id: userId,
+          user_name: userName,
+          phone,
+          romantic: scores.Romantic,
+          adventurous: scores.Adventurous,
+          intellectual: scores.Intellectual,
+          creative: scores.Creative,
+          chill: scores.Chill,
+          social: scores.Social,
+          ambitious: scores.Ambitious
+        })
+        .select()
 
-    if (error) {
-      console.error(error)
-      alert('Error saving quiz.')
-      return
-    }
+      if (error) {
+        console.error('Supabase error:', error)
+        alert(`Error saving quiz: ${error.message}`)
+        return
+      }
 
-    setHasSubmitted(true)
-    const myRow = upsertData?.[0] as QuizResponse
-    if (myRow) {
+      if (!upsertData || upsertData.length === 0) {
+        console.error('No data returned from upsert')
+        alert('Error: No data returned from save operation')
+        return
+      }
+
+      setHasSubmitted(true)
+      const myRow = upsertData[0] as QuizResponse
       await fetchMatches(myRow, userId)
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      alert(`Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

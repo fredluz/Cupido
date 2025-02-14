@@ -9,7 +9,7 @@ export const quizData: QuizQuestion[] = [
         { label: 'Mergulhar num bom livro, podcast ou documentário', value: 'Intellectual' },
         { label: 'Montar um cavalete junto à janela para pintar com a luz da manhã', value: 'Creative' },
         { label: 'Dormir até tarde com cobertores aconchegantes, música suave e zero obrigações', value: 'Chill' },
-        { label: 'Contactar os meus amigos para ver como estão a lidar com a ressaca da noite anterior', value: 'Social' },
+        { label: 'Ligar aos meus amigos para ver como estão a lidar com a ressaca da noite anterior', value: 'Social' },
         { label: 'Começar cedo os meus projetos pessoais e o planeamento semanal', value: 'Ambitious' }
       ]
     },
@@ -28,25 +28,25 @@ export const quizData: QuizQuestion[] = [
     {
       question: 'O teu perfil numa aplicação de encontros destacaria...',
       answers: [
-        { label: 'Procuro alguém para deep talks à meia-noite', value: 'Romantic' },
-        { label: 'Procuro cúmplice para escapadelas espontâneas de fim de semana', value: 'Adventurous' },
-        { label: 'Quero debater filosofia às 3 da manhã', value: 'Intellectual' },
-        { label: 'Sou artista à procura de musa (ou pelo menos alguém para pintar)', value: 'Creative' },
-        { label: 'Estou aqui para encontrar alguém para ver netflix', value: 'Chill' },
-        { label: 'O meu grupo de amigos tem espaço para mais um', value: 'Social' },
-        { label: 'Sou futuro CEO à procura de futura CEO', value: 'Ambitious' }
+        { label: '"Procuro alguém para deep talks à meia-noite"', value: 'Romantic' },
+        { label: '"Procuro cúmplice para escapadelas espontâneas de fim de semana"', value: 'Adventurous' },
+        { label: '"Quero debater filosofia às 3 da manhã"', value: 'Intellectual' },
+        { label: '"Sou artista à procura de musa (ou pelo menos alguém para pintar")', value: 'Creative' },
+        { label: '"Estou aqui para encontrar alguém para ver netflix"', value: 'Chill' },
+        { label: '"O meu grupo de amigos tem espaço para mais um"', value: 'Social' },
+        { label: '"Sou futuro CEO à procura de futura CEO"', value: 'Ambitious' }
       ]
     },
     {
       question: 'Qual é o teu animal de estimação ideal?',
       answers: [
-        { label: 'Quero um gato carinhoso que adore aconchegar-se', value: 'Romantic' },
-        { label: 'Quero um cão energético para me acompanhar nas caminhadas', value: 'Adventurous' },
-        { label: 'Quero um papagaio falante', value: 'Intellectual' },
-        { label: 'Quero um animal exótico ou incomum que se destaque', value: 'Creative' },
+        { label: 'Uma gata carinhosa que adore aconchegar-se', value: 'Romantic' },
+        { label: 'Um cão energético para me acompanhar nas caminhadas', value: 'Adventurous' },
+        { label: 'Um papagaio falante', value: 'Intellectual' },
+        { label: 'Um animal exótico ou incomum que se destaque', value: 'Creative' },
         { label: 'Prefiro um aquário de baixa manutenção', value: 'Chill' },
-        { label: 'Quero um cão amigável que adore conhecer pessoas novas', value: 'Social' },
-        { label: 'Quero um cavalo de competição que possa treinar para ganharmos troféus juntos', value: 'Ambitious' }
+        { label: 'Um cão amigável que adore conhecer pessoas novas', value: 'Social' },
+        { label: 'Um cavalo de competição que possa treinar para ganharmos troféus juntos', value: 'Ambitious' }
       ]
     },
     {
