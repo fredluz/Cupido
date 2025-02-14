@@ -109,6 +109,9 @@ export const Results: React.FC<ResultsProps> = ({
           Guardar
         </button>
       </div>
+      <p style={{ marginTop: '1rem', fontWeight: 500, color: '#be123c' }}>
+        gostas dos teus matches? encontra-os na festa da AlternAtiva no contentor marítimo e habilita-te a ganhar prémios, ao som de DJ Wappy e DJ Piki!
+      </p>
     </div>
   )
 }
