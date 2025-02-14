@@ -1,6 +1,7 @@
-import React, { CSSProperties, useState } from 'react'
+import React, { CSSProperties, useState, useEffect } from 'react'
 import { styles } from '../styles'
 import { Category, QuizQuestion } from '../types'
+import { quizImages } from '../assets/quizImages'
 
 interface QuizProps {
   quizData: QuizQuestion[]
@@ -24,6 +25,31 @@ export const Quiz: React.FC<QuizProps> = ({
   onSubmit
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [preloadedImages, setPreloadedImages] = useState<HTMLImageElement[]>([])
+
+  // Add preloading effect
+  useEffect(() => {
+    // Preload all images
+    const loadImages = async () => {
+      const imagePromises = quizImages.map(src => {
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image()
+          img.src = src
+          img.onload = () => resolve(img)
+          img.onerror = reject
+        })
+      })
+
+      try {
+        const loadedImages = await Promise.all(imagePromises)
+        setPreloadedImages(loadedImages)
+      } catch (error) {
+        console.error('Error preloading images:', error)
+      }
+    }
+
+    loadImages()
+  }, []) // Only run once on mount
 
   const handleNext = () => {
     if (currentQuestion < quizData.length) {
@@ -91,7 +117,20 @@ export const Quiz: React.FC<QuizProps> = ({
         <div style={styles.question}>{q.question}</div>
         
         <div style={styles.imageContainer}>
-          [Imagem da pergunta {currentQuestion}]
+          {preloadedImages[currentQuestion - 1] ? (
+            <img 
+              src={quizImages[currentQuestion - 1]} 
+              alt={`Illustration for ${q.question}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+          ) : (
+            <div>Loading...</div>
+          )}
         </div>
 
         <div style={styles.answerContainer}>

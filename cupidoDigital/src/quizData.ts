@@ -16,12 +16,12 @@ export const quizData: QuizQuestion[] = [
     {
       question: 'O crush acabou de entrar na sala de aula. Qual é a estratégia?',
       answers: [
-        { label: 'Deixei uma nota com uma mensagem fofa junto com o seu café favorito no lugar dele', value: 'Romantic' },
-        { label: 'Convido-o para faltarmos à aula juntos', value: 'Adventurous' },
-        { label: 'Inicio uma conversa sobre um tópico fascinante que o professor mencionou', value: 'Intellectual' },
-        { label: 'Mostro-lhe o desenho que fez dele no meu caderno', value: 'Creative' },
+        { label: 'Já deixei uma nota com uma mensagem fofa no lugar dele', value: 'Romantic' },
+        { label: 'Convido-o para faltarmos à aula e irmos explorar Sintra juntos', value: 'Adventurous' },
+        { label: 'Meto conversa sobre um tópico fascinante que o professor mencionou', value: 'Intellectual' },
+        { label: 'Mostro-lhe o desenho que fiz dele no meu caderno', value: 'Creative' },
         { label: 'Aceno casualmente e continuo a ouvir a minha música', value: 'Chill' },
-        { label: 'Convido-o para se juntar à minha mesa já cheia de amigos', value: 'Social' },
+        { label: 'Convido-o para se juntar à minha mesa', value: 'Social' },
         { label: 'Peço-lhe para ser o meu colega naquele projeto importante da cadeira', value: 'Ambitious' }
       ]
     },

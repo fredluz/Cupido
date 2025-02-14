@@ -116,7 +116,8 @@ export const styles: StyleObject = {
   },
   imageContainer: {
     width: '100%',
-    height: '200px',
+    minHeight: '200px',  // Change from fixed height to minHeight
+    maxHeight: '400px',  // Add maxHeight to prevent too large images
     marginTop: '1rem',
     marginBottom: '2rem',
     borderRadius: '8px',
@@ -124,6 +125,6 @@ export const styles: StyleObject = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#9d174d',
+    overflow: 'hidden',  // Add this to contain the image
   }
 }
