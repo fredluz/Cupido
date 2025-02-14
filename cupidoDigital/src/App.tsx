@@ -185,6 +185,18 @@ function App() {
     }
   }
 
+  const handlePhoneUpdate = async (newPhone: string) => {
+    setPhone(newPhone)
+    const userId = localStorage.getItem('user_id') || ''
+    if (!userId) return
+
+    // Update in Supabase
+    await supabase
+      .from('quiz_responses')
+      .update({ phone: newPhone })
+      .eq('user_id', userId)
+  }
+
   return (
     <div style={styles.container}>
       <h1>Matchmaker da AlternAtiva</h1>
@@ -211,6 +223,8 @@ function App() {
           onRefreshMatches={handleRefreshMatches}
           userGender={gender as Gender}  // We can assert here because hasSubmitted is true
           lookingFor={lookingFor as LookingFor}
+          phone={phone}
+          onUpdatePhone={handlePhoneUpdate}
         />
       )}
     </div>

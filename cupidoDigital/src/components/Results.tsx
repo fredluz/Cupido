@@ -8,14 +8,17 @@ interface ResultsProps {
   onRefreshMatches: () => void
   userGender: Gender
   lookingFor: LookingFor
+  phone: string
+  onUpdatePhone: (newPhone: string) => void
 }
 
 export const Results: React.FC<ResultsProps> = ({
   userName,
   topMatches,
   onRefreshMatches,
-  userGender,
-  lookingFor
+  lookingFor,
+  phone,
+  onUpdatePhone
 }) => {
   const codeStyle: CSSProperties = {
     background: '#f5f5f5',
@@ -24,6 +27,8 @@ export const Results: React.FC<ResultsProps> = ({
     display: 'block',
     wordBreak: 'break-all'
   }
+
+  const [editPhone, setEditPhone] = React.useState(phone)
 
   const getMatchLabel = () => {
     if (lookingFor === 'm') return 'Matches '
@@ -86,6 +91,23 @@ export const Results: React.FC<ResultsProps> = ({
         <code style={codeStyle}>
           {window.location.origin}?u={localStorage.getItem('user_id')}
         </code>
+      </div>
+      <div style={styles.matchCard}>
+        <p style={{marginBottom: '0.5rem'} as CSSProperties}>
+          Atualiza o teu Instagram para poderes ser contactado:
+        </p>
+        <input
+          style={styles.input}
+          type="text"
+          value={editPhone}
+          onChange={e => setEditPhone(e.target.value)}
+        />
+        <button
+          style={{ ...styles.submitButton, marginTop: '0.5rem' }}
+          onClick={() => onUpdatePhone(editPhone)}
+        >
+          Guardar
+        </button>
       </div>
     </div>
   )
