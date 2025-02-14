@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { Quiz } from './components/Quiz'
 import { Results } from './components/Results'
-import { Category, QuizResponse } from './types'
+import { Category, QuizResponse, Gender, LookingFor } from './types'
 import { styles } from './styles'
 import { quizData } from './quizData'
 
@@ -12,6 +12,8 @@ function App() {
   const [answers, setAnswers] = useState<(Category | null)[]>(Array(quizData.length).fill(null))
   const [topMatches, setTopMatches] = useState<QuizResponse[]>([])
   const [hasSubmitted, setHasSubmitted] = useState(false)
+  const [gender, setGender] = useState<Gender | null>(null)
+  const [lookingFor, setLookingFor] = useState<LookingFor | null>(null)
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search)
@@ -45,6 +47,13 @@ function App() {
     await fetchMatches(myRow, uId)
   }
 
+  const calcCompatibility = (a: QuizResponse, b: QuizResponse) => {
+    const distance = calcDistance(a, b)
+    const maxDistance = Math.sqrt(7 * Math.pow(14, 2))
+    const compatibility = 100 * (1 - Math.pow(distance / maxDistance, 0.6))
+    return Math.round(compatibility)
+  }
+
   const fetchMatches = async (myRow: QuizResponse, userId: string) => {
     const { data: allRows, error } = await supabase
       .from('quiz_responses')
@@ -52,13 +61,32 @@ function App() {
 
     if (error || !allRows) return
 
-    const others = allRows.filter((r: QuizResponse) => r.user_id !== userId)
+    const others = allRows.filter((r: QuizResponse) => {
+      // Filter by user ID
+      if (r.user_id === userId) return false
+      
+      // Filter by gender preferences
+      if (myRow.looking_for === 'mf') {
+        // User looking for both, check if the other person is interested in user's gender
+        return r.looking_for === 'mf' || r.looking_for === myRow.gender
+      } else {
+        // User looking for specific gender, check if match
+        return r.gender === myRow.looking_for && 
+          (r.looking_for === 'mf' || r.looking_for === myRow.gender)
+      }
+    })
+
     if (others.length === 0) {
       setTopMatches([])
       return
     }
 
-    const sorted = [...others].sort((a, b) => calcDistance(myRow, a) - calcDistance(myRow, b))
+    const matchesWithScore = others.map(other => ({
+      ...other,
+      compatibility: calcCompatibility(myRow, other)
+    }))
+
+    const sorted = matchesWithScore.sort((a, b) => b.compatibility - a.compatibility)
     setTopMatches(sorted.slice(0, 3))
   }
 
@@ -109,6 +137,8 @@ function App() {
           user_id: userId,
           user_name: userName,
           phone,
+          gender,
+          looking_for: lookingFor,
           romantic: scores.Romantic,
           adventurous: scores.Adventurous,
           intellectual: scores.Intellectual,
@@ -165,9 +195,13 @@ function App() {
           answers={answers}
           userName={userName}
           phone={phone}
+          gender={gender}
+          lookingFor={lookingFor}
           onUserNameChange={setUserName}
           onPhoneChange={setPhone}
           onAnswerChange={handleAnswerChange}
+          onGenderChange={setGender}
+          onLookingForChange={setLookingFor}
           onSubmit={handleSubmit}
         />
       ) : (
@@ -175,6 +209,8 @@ function App() {
           userName={userName}
           topMatches={topMatches}
           onRefreshMatches={handleRefreshMatches}
+          userGender={gender as Gender}  // We can assert here because hasSubmitted is true
+          lookingFor={lookingFor as LookingFor}
         />
       )}
     </div>

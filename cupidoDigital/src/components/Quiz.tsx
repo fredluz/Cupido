@@ -1,6 +1,6 @@
 import React, { CSSProperties, useState, useEffect } from 'react'
 import { styles } from '../styles'
-import { Category, QuizQuestion } from '../types'
+import { Category, Gender, LookingFor, QuizQuestion } from '../types'
 import { quizImages } from '../assets/quizImages'
 
 interface QuizProps {
@@ -8,8 +8,12 @@ interface QuizProps {
   answers: (Category | null)[]
   userName: string
   phone: string
+  gender: Gender | null
+  lookingFor: LookingFor | null
   onUserNameChange: (name: string) => void
   onPhoneChange: (phone: string) => void
+  onGenderChange: (gender: Gender) => void
+  onLookingForChange: (lookingFor: LookingFor) => void
   onAnswerChange: (questionIndex: number, category: Category) => void
   onSubmit: (e: React.FormEvent) => void
 }
@@ -19,8 +23,12 @@ export const Quiz: React.FC<QuizProps> = ({
   answers,
   userName,
   phone,
+  gender,
+  lookingFor,
   onUserNameChange,
   onPhoneChange,
+  onGenderChange,
+  onLookingForChange,
   onAnswerChange,
   onSubmit
 }) => {
@@ -51,15 +59,21 @@ export const Quiz: React.FC<QuizProps> = ({
     loadImages()
   }, []) // Only run once on mount
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleNext = () => {
     if (currentQuestion < quizData.length) {
       setCurrentQuestion(curr => curr + 1)
+      scrollToTop()
     }
   }
 
   const handlePrev = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(curr => curr - 1)
+      scrollToTop()
     }
   }
 
@@ -69,6 +83,10 @@ export const Quiz: React.FC<QuizProps> = ({
     return (
       <form onSubmit={(e) => {
         e.preventDefault()
+        if (!gender || !lookingFor) {
+          alert('Por favor seleciona o teu género e preferência')
+          return
+        }
         handleNext()
       }}>
         <div style={styles.questionCard}>
@@ -90,6 +108,69 @@ export const Quiz: React.FC<QuizProps> = ({
             value={phone}
             onChange={(e) => onPhoneChange(e.target.value)}
           />
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '0.5rem', fontWeight: 500 }}>Tu és:</div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => onGenderChange('m')}
+                style={{
+                  ...styles.answerButton,
+                  ...(gender === 'm' ? styles.selectedAnswer : {})
+                }}
+              >
+                Homem
+              </button>
+              <button
+                type="button"
+                onClick={() => onGenderChange('f')}
+                style={{
+                  ...styles.answerButton,
+                  ...(gender === 'f' ? styles.selectedAnswer : {})
+                }}
+              >
+                Mulher
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '0.5rem', fontWeight: 500 }}>Procuras:</div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => onLookingForChange('m')}
+                style={{
+                  ...styles.answerButton,
+                  ...(lookingFor === 'm' ? styles.selectedAnswer : {})
+                }}
+              >
+                Homens
+              </button>
+              <button
+                type="button"
+                onClick={() => onLookingForChange('f')}
+                style={{
+                  ...styles.answerButton,
+                  ...(lookingFor === 'f' ? styles.selectedAnswer : {})
+                }}
+              >
+                Mulheres
+              </button>
+              <button
+                type="button"
+                onClick={() => onLookingForChange('mf')}
+                style={{
+                  ...styles.answerButton,
+                  ...(lookingFor === 'mf' ? styles.selectedAnswer : {})
+                }}
+              >
+                Ambos
+              </button>
+            </div>
+          </div>
+
           <button 
             type="submit" 
             style={styles.submitButton}
@@ -152,7 +233,9 @@ export const Quiz: React.FC<QuizProps> = ({
                 onClick={() => {
                   onAnswerChange(currentQuestion - 1, ans.value)
                   if (!isLastQuestion) {
-                    handleNext()
+                    handleNext() // This will now trigger the scroll
+                  } else {
+                    scrollToTop() // Scroll even on last question
                   }
                 }}
               >

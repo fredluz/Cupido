@@ -1,5 +1,8 @@
 export type Category = 'Romantic' | 'Adventurous' | 'Intellectual' | 'Creative' | 'Chill' | 'Social' | 'Ambitious'
 
+export type Gender = 'm' | 'f'
+export type LookingFor = 'm' | 'f' | 'mf'
+
 export interface QuizQuestion {
   question: string
   answers: {
@@ -20,4 +23,7 @@ export interface QuizResponse {
   chill: number
   social: number
   ambitious: number
+  compatibility?: number
+  gender: Gender
+  looking_for: LookingFor
 }
