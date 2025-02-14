@@ -104,11 +104,11 @@ export const Quiz: React.FC<QuizProps> = ({
           <input
             style={styles.input}
             type="text"
-            placeholder="O teu Instagram (opcional)"
+            placeholder="O teu Instagram (é opcional, mas pode ajudar a facilitar o contacto)"
             value={phone}
             onChange={(e) => onPhoneChange(e.target.value)}
           />
-          
+    
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ marginBottom: '0.5rem', fontWeight: 500 }}>Tu és:</div>
             <div style={{ display: 'flex', gap: '1rem' }}>

@@ -109,7 +109,16 @@ export const Results: React.FC<ResultsProps> = ({
           Guardar
         </button>
       </div>
-      <p style={{ marginTop: '1rem', fontWeight: 500, color: '#be123c' }}>
+      <p style={{
+        marginTop: '1rem',
+        fontWeight: 'bold',
+        fontSize: '1.2rem',
+        color: '#ffffff',
+        backgroundColor: '#fb7185',
+        padding: '1rem',
+        borderRadius: '8px',
+        textAlign: 'center',
+      }}>
         gostas dos teus matches? encontra-os na festa da AlternAtiva no contentor marítimo e habilita-te a ganhar prémios, ao som de DJ Wappy e DJ Piki!
       </p>
     </div>
