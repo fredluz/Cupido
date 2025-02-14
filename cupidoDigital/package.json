@@ -2,12 +2,14 @@
   "name": "cupidodigital",
   "private": true,
   "version": "0.0.0",
+  "homepage":"https://fredluz.github.io/Cupido/",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
