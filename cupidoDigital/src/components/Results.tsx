@@ -71,9 +71,7 @@ export const Results: React.FC<ResultsProps> = ({
               )}
             </div>
           ))}
-          <p style={{marginTop: '1rem', fontStyle: 'italic'} as CSSProperties}>
-            Volta daqui a pouco e vê se entretanto aparece alguém mais interessante
-          </p>
+          
           <p style={{
             marginTop: '1rem',
             fontWeight: 'bold',
@@ -85,6 +83,10 @@ export const Results: React.FC<ResultsProps> = ({
             textAlign: 'center',
           }}>
             gostas dos teus matches? encontra-os na festa da AlternAtiva no contentor marítimo e habilita-te a ganhar prémios, ao som de DJ Wappy e DJ Piki!
+          </p>
+
+          <p style={{marginTop: '1rem', fontStyle: 'italic'} as CSSProperties}>
+            Volta daqui a pouco e vê se entretanto aparece alguém mais interessante
           </p>
         </div>
       ) : (
