@@ -1,10 +1,36 @@
-import React, { useEffect, useState } from 'react'
-import { supabase } from './supabaseClient'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
+import {
+  DEVICE_USER_ID_STORAGE_KEY,
+  getOrCreateDeviceUserId,
+  supabase
+} from './supabaseClient'
 import { Quiz } from './components/Quiz'
 import { Results } from './components/Results'
-import { Category, QuizResponse, Gender, LookingFor } from './types'
-import { styles } from './styles'
+import { Category, QuizResponse, Gender, LookingFor, StudyYear } from './types'
+import { styles, injectGlassStyles, globalBackgroundStyle, floatingOrbStyle, typography } from './styles'
 import { quizData } from './quizData'
+import { BackendMatch, getMatches, getMyProfile, MyProfile, submitQuiz } from './services/quizFlow'
+import { GroupSummary, listMyGroup } from './services/groupChat'
+
+const AUTO_REFRESH_INTERVAL_MS = 30000 // 30 seconds
+
+const mapBackendMatchToQuizResponse = (match: BackendMatch): QuizResponse => ({
+  user_id: match.user_id,
+  user_name: match.user_name,
+  phone: match.phone,
+  gender: match.gender,
+  looking_for: match.looking_for,
+  compatibility: match.compatibility,
+  is_mutual_top3: match.is_mutual_top3,
+  rank: match.rank,
+  romantic: 0,
+  adventurous: 0,
+  intellectual: 0,
+  creative: 0,
+  chill: 0,
+  social: 0,
+  ambitious: 0
+})
 
 function App() {
   const [userName, setUserName] = useState('')
@@ -14,93 +40,55 @@ function App() {
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [gender, setGender] = useState<Gender | null>(null)
   const [lookingFor, setLookingFor] = useState<LookingFor | null>(null)
+  const [degreeCode, setDegreeCode] = useState('')
+  const [studyYear, setStudyYear] = useState<StudyYear | ''>('')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [myGroup, setMyGroup] = useState<GroupSummary | null>(null)
+  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search)
-    const paramUserId = queryParams.get('u')
-    if (paramUserId) {
-      localStorage.setItem('user_id', paramUserId)
-    }
-
-    let storedId = localStorage.getItem('user_id')
-    if (!storedId) {
-      storedId = crypto.randomUUID()
-      localStorage.setItem('user_id', storedId)
-    }
-
-    fetchMyRow(storedId).catch(console.error)
+  const applyProfileToState = useCallback((profile: MyProfile) => {
+    setUserName(profile.user_name)
+    setPhone(profile.phone)
+    setGender(profile.gender)
+    setLookingFor(profile.looking_for)
+    setDegreeCode(profile.course_code)
+    setStudyYear(profile.study_year ?? '')
   }, [])
 
-  const fetchMyRow = async (uId: string) => {
-    const { data: myRow, error } = await supabase
-      .from('quiz_responses')
-      .select('*')
-      .eq('user_id', uId)
-      .single()
+  const fetchMyRow = useCallback(async (userId: string) => {
+    const myProfile = await getMyProfile(userId)
 
-    if (error || !myRow) return
-
-    setUserName(myRow.user_name || '')
-    setPhone(myRow.phone || '')
-    setHasSubmitted(true)
-
-    await fetchMatches(myRow, uId)
-  }
-
-  const calcCompatibility = (a: QuizResponse, b: QuizResponse) => {
-    const distance = calcDistance(a, b)
-    const maxDistance = Math.sqrt(7 * Math.pow(14, 2))
-    const compatibility = 100 * (1 - Math.pow(distance / maxDistance, 0.6))
-    return Math.round(compatibility)
-  }
-
-  const fetchMatches = async (myRow: QuizResponse, userId: string) => {
-    const { data: allRows, error } = await supabase
-      .from('quiz_responses')
-      .select('*')
-
-    if (error || !allRows) return
-
-    const others = allRows.filter((r: QuizResponse) => {
-      // Filter by user ID
-      if (r.user_id === userId) return false
-      
-      // Filter by gender preferences
-      if (myRow.looking_for === 'mf') {
-        // User looking for both, check if the other person is interested in user's gender
-        return r.looking_for === 'mf' || r.looking_for === myRow.gender
-      } else {
-        // User looking for specific gender, check if match
-        return r.gender === myRow.looking_for && 
-          (r.looking_for === 'mf' || r.looking_for === myRow.gender)
-      }
-    })
-
-    if (others.length === 0) {
-      setTopMatches([])
+    if (!myProfile) {
       return
     }
 
-    const matchesWithScore = others.map(other => ({
-      ...other,
-      compatibility: calcCompatibility(myRow, other)
-    }))
+    applyProfileToState(myProfile)
+    setHasSubmitted(true)
 
-    const sorted = matchesWithScore.sort((a, b) => b.compatibility - a.compatibility)
-    setTopMatches(sorted.slice(0, 3))
-  }
+    const [backendMatches, group] = await Promise.all([
+      getMatches(myProfile),
+      listMyGroup().catch(() => null)
+    ])
+    setTopMatches(backendMatches.map(mapBackendMatchToQuizResponse))
+    setMyGroup(group)
+  }, [applyProfileToState])
 
-  const calcDistance = (a: QuizResponse, b: QuizResponse) => {
-    return Math.sqrt(
-      Math.pow(a.romantic - b.romantic, 2) +
-      Math.pow(a.adventurous - b.adventurous, 2) +
-      Math.pow(a.intellectual - b.intellectual, 2) +
-      Math.pow(a.creative - b.creative, 2) +
-      Math.pow(a.chill - b.chill, 2) +
-      Math.pow(a.social - b.social, 2) +
-      Math.pow(a.ambitious - b.ambitious, 2)
-    )
-  }
+  useEffect(() => {
+    // Inject glass morphism styles and animations
+    injectGlassStyles()
+
+    const queryParams = new URLSearchParams(window.location.search)
+    const paramUserId = queryParams.get('u')
+    if (paramUserId) {
+      localStorage.setItem(DEVICE_USER_ID_STORAGE_KEY, paramUserId)
+    }
+
+    const userId = paramUserId ?? getOrCreateDeviceUserId()
+
+    fetchMyRow(userId).catch((error) => {
+      console.error('Failed to restore profile', error)
+    })
+  }, [fetchMyRow])
 
   const handleAnswerChange = (qIndex: number, category: Category) => {
     const newAnswers = [...answers]
@@ -111,123 +99,179 @@ function App() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const userId = localStorage.getItem('user_id') || ''
+    const userId = localStorage.getItem(DEVICE_USER_ID_STORAGE_KEY) || getOrCreateDeviceUserId()
     if (!userId) {
       alert('Error: No user ID found')
       return
     }
 
-    const scores: Record<Category, number> = {
-      Romantic: 0,
-      Adventurous: 0,
-      Intellectual: 0,
-      Creative: 0,
-      Chill: 0,
-      Social: 0,
-      Ambitious: 0
+    if (!gender || !lookingFor) {
+      alert('Por favor seleciona o teu género e preferência')
+      return
     }
-    answers.forEach(ans => {
-      if (ans) scores[ans] += 2
-    })
+
+    if (!degreeCode || !studyYear) {
+      alert('Por favor seleciona licenciatura e ano')
+      return
+    }
 
     try {
-      const { data: upsertData, error } = await supabase
-        .from('quiz_responses')
-        .upsert({
-          user_id: userId,
-          user_name: userName,
-          phone,
-          gender,
-          looking_for: lookingFor,
-          romantic: scores.Romantic,
-          adventurous: scores.Adventurous,
-          intellectual: scores.Intellectual,
-          creative: scores.Creative,
-          chill: scores.Chill,
-          social: scores.Social,
-          ambitious: scores.Ambitious
-        })
-        .select()
-
-      if (error) {
-        console.error('Supabase error:', error)
-        alert(`Error saving quiz: ${error.message}`)
-        return
-      }
-
-      if (!upsertData || upsertData.length === 0) {
-        console.error('No data returned from upsert')
-        alert('Error: No data returned from save operation')
-        return
-      }
+      const backendMatches = await submitQuiz({
+        userName,
+        phone,
+        gender,
+        lookingFor,
+        courseCode: degreeCode,
+        studyYear,
+        answers
+      })
 
       setHasSubmitted(true)
-      const myRow = upsertData[0] as QuizResponse
-      await fetchMatches(myRow, userId)
+      setTopMatches(backendMatches.map(mapBackendMatchToQuizResponse))
+      
+      // Fetch group assignment after submission
+      const group = await listMyGroup().catch(() => null)
+      setMyGroup(group)
     } catch (err) {
       console.error('Unexpected error:', err)
       alert(`Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
-  const handleRefreshMatches = async () => {
-    const userId = localStorage.getItem('user_id') || ''
+  const handleRefreshMatches = useCallback(async () => {
+    const userId = localStorage.getItem(DEVICE_USER_ID_STORAGE_KEY) || getOrCreateDeviceUserId()
     if (!userId) return
 
-    const { data: myRow, error } = await supabase
-      .from('quiz_responses')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
+    setIsRefreshing(true)
+    try {
+      const myProfile = await getMyProfile(userId)
+      if (!myProfile) {
+        setTopMatches([])
+        return
+      }
 
-    if (myRow && !error) {
-      fetchMatches(myRow, userId)
+      applyProfileToState(myProfile)
+      const [backendMatches, group] = await Promise.all([
+        getMatches(myProfile),
+        listMyGroup().catch(() => null)
+      ])
+      setTopMatches(backendMatches.map(mapBackendMatchToQuizResponse))
+      setMyGroup(group)
+    } catch (error) {
+      console.error('Failed to refresh matches', error)
+    } finally {
+      setIsRefreshing(false)
     }
-  }
+  }, [applyProfileToState])
+
+  // Auto-refresh matches every 30 seconds after submission
+  useEffect(() => {
+    if (hasSubmitted) {
+      // Initial refresh
+      handleRefreshMatches()
+      
+      // Set up interval for auto-refresh
+      autoRefreshRef.current = setInterval(() => {
+        handleRefreshMatches()
+      }, AUTO_REFRESH_INTERVAL_MS)
+
+      return () => {
+        if (autoRefreshRef.current) {
+          clearInterval(autoRefreshRef.current)
+          autoRefreshRef.current = null
+        }
+      }
+    }
+  }, [hasSubmitted, handleRefreshMatches])
 
   const handlePhoneUpdate = async (newPhone: string) => {
     setPhone(newPhone)
-    const userId = localStorage.getItem('user_id') || ''
+    const userId = localStorage.getItem(DEVICE_USER_ID_STORAGE_KEY) || getOrCreateDeviceUserId()
     if (!userId) return
 
-    // Update in Supabase
     await supabase
       .from('quiz_responses')
-      .update({ phone: newPhone })
+      .update({
+        phone: newPhone,
+        instagram_handle: newPhone
+      })
       .eq('user_id', userId)
   }
 
-  return (
-    <div style={styles.container}>
-      <h1>Matchmaker da AlternAtiva</h1>
+  // Dark text for header on glass background
+  const headerTitleStyle = {
+    ...typography.title,
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #0e7490 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }
 
-      {!hasSubmitted ? (
-        <Quiz
-          quizData={quizData}
-          answers={answers}
-          userName={userName}
-          phone={phone}
-          gender={gender}
-          lookingFor={lookingFor}
-          onUserNameChange={setUserName}
-          onPhoneChange={setPhone}
-          onAnswerChange={handleAnswerChange}
-          onGenderChange={setGender}
-          onLookingForChange={setLookingFor}
-          onSubmit={handleSubmit}
-        />
-      ) : (
-        <Results
-          userName={userName}
-          topMatches={topMatches}
-          onRefreshMatches={handleRefreshMatches}
-          userGender={gender as Gender}  // We can assert here because hasSubmitted is true
-          lookingFor={lookingFor as LookingFor}
-          phone={phone}
-          onUpdatePhone={handlePhoneUpdate}
-        />
-      )}
-    </div>
+  const headerSubtitleStyle = {
+    ...typography.subtitle,
+    color: '#334155',
+    marginBottom: '1rem',
+  }
+
+  return (
+    <>
+      {/* Global background with gradient atmosphere */}
+      <div style={globalBackgroundStyle} />
+      
+      {/* Floating ambient orbs for liquid effect */}
+      <div style={floatingOrbStyle('top-left')} />
+      <div style={floatingOrbStyle('top-right')} />
+      <div style={floatingOrbStyle('bottom-left')} />
+      <div style={floatingOrbStyle('bottom-right')} />
+      
+      <div style={styles.container}>
+        <div className="glass-card" style={{ 
+          textAlign: 'center', 
+          marginBottom: '1rem',
+          padding: '1.25rem',
+        }}>
+          <h1 style={headerTitleStyle}>
+            Matchmaker do ISCTE-Sintra
+          </h1>
+          <p style={headerSubtitleStyle}>
+            Descobre as tuas conexões mais compatíveis ✨
+          </p>
+        </div>
+
+        {!hasSubmitted ? (
+          <Quiz
+            quizData={quizData}
+            answers={answers}
+            userName={userName}
+            phone={phone}
+            gender={gender}
+            lookingFor={lookingFor}
+            degreeCode={degreeCode}
+            studyYear={studyYear}
+            onUserNameChange={setUserName}
+            onPhoneChange={setPhone}
+            onAnswerChange={handleAnswerChange}
+            onGenderChange={setGender}
+            onLookingForChange={setLookingFor}
+            onDegreeCodeChange={setDegreeCode}
+            onStudyYearChange={setStudyYear}
+            onSubmit={handleSubmit}
+          />
+        ) : (
+          <Results
+            userName={userName}
+            topMatches={topMatches}
+            onRefreshMatches={handleRefreshMatches}
+            userGender={gender as Gender}
+            lookingFor={lookingFor as LookingFor}
+            phone={phone}
+            onUpdatePhone={handlePhoneUpdate}
+            isRefreshing={isRefreshing}
+            myGroup={myGroup}
+          />
+        )}
+      </div>
+    </>
   )
 }
 
